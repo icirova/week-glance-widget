@@ -1,47 +1,13 @@
 import { css } from "uebersicht";
 
-const CONFIG_PATH = "./config.local.json";
-const PROXY_URL = "http://127.0.0.1:41417/";
 const REFRESH_MS = 15 * 60 * 1000;
 const WEEKDAYS_SHORT = ["Ne", "Po", "Út", "St", "Čt", "Pá", "So"];
 const ICAL_WEEKDAYS = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+const ERROR_PREFIX = "__WEEK_GLANCE_ERROR__:";
 
 export const refreshFrequency = REFRESH_MS;
 
-export const initialState = {
-  status: "loading",
-  days: [],
-  generatedAt: null,
-  message: "Načítání kalendáře...",
-};
-
-export const command = (dispatch) => {
-  loadCalendar()
-    .then((payload) => dispatch({ type: "calendar:loaded", payload }))
-    .catch((error) => {
-      dispatch({
-        type: "calendar:error",
-        message: error && error.safeMessage ? error.safeMessage : "Kalendář se nepodařilo načíst.",
-      });
-    });
-};
-
-export const updateState = (event, previousState = initialState) => {
-  if (event.type === "calendar:loaded") {
-    return event.payload;
-  }
-
-  if (event.type === "calendar:error") {
-    return {
-      ...previousState,
-      status: "error",
-      message: event.message,
-      generatedAt: new Date().toISOString(),
-    };
-  }
-
-  return previousState;
-};
+export const command = `/bin/zsh -lc 'url=$(/usr/bin/plutil -extract calendarIcsUrl raw -o - config.local.json 2>/dev/null); if [[ -z "$url" || "$url" == "PASTE_YOUR_SECRET_ICAL_URL_HERE" ]]; then echo "${ERROR_PREFIX}V config.local.json chybí calendarIcsUrl."; exit 0; fi; /usr/bin/curl -fsSL "$url" || echo "${ERROR_PREFIX}Kalendář se nepodařilo načíst."'`;
 
 export const className = `
   top: 26px;
@@ -136,98 +102,81 @@ const quiet = css`
   color: rgba(255, 255, 255, 0.58);
 `;
 
-export const render = ({ status, days, message }) => (
-  <section className={widget}>
-    <h1 className={title}>Tento týden</h1>
+export const render = ({ output, error }) => {
+  const { status, days, message } = buildRenderState(output, error);
 
-    {status === "error" ? (
-      <p className={quiet}>{message}</p>
-    ) : status === "loading" ? (
-      <p className={quiet}>Načítání kalendáře...</p>
-    ) : days.length === 0 ? (
-      <p className={quiet}>Žádné události na příštích 7 dní.</p>
-    ) : (
-      <div>
-        {days.map((day) => (
-          <section className={dayBlock} key={day.key}>
-            <h2 className={dayHeading}>
-              <span>{day.label}</span>
-              {day.isToday ? <span className={todayPill}>dnes</span> : null}
-            </h2>
-            {day.events.map((event) => (
-              <div className={eventRow} key={event.key}>
-                <span className={bullet}>•</span>
-                <span className={eventText}>
-                  {event.time ? <span className={eventTime}>{event.time}</span> : null}
-                  {event.title}
-                </span>
-              </div>
-            ))}
-          </section>
-        ))}
-      </div>
-    )}
-  </section>
-);
+  return (
+    <section className={widget}>
+      <h1 className={title}>Tento týden</h1>
 
-async function loadCalendar() {
-  const config = await loadConfig();
-  const icsText = await loadIcs(config.calendarIcsUrl);
-  const now = new Date();
-  const windowStart = startOfDay(now);
-  const windowEnd = addDays(windowStart, 7);
-  const events = parseIcsEvents(icsText, windowStart, windowEnd);
+      {status === "error" ? (
+        <p className={quiet}>{message}</p>
+      ) : status === "loading" ? (
+        <p className={quiet}>Načítání kalendáře...</p>
+      ) : days.length === 0 ? (
+        <p className={quiet}>Žádné události na příštích 7 dní.</p>
+      ) : (
+        <div>
+          {days.map((day) => (
+            <section className={dayBlock} key={day.key}>
+              <h2 className={dayHeading}>
+                <span>{day.label}</span>
+                {day.isToday ? <span className={todayPill}>dnes</span> : null}
+              </h2>
+              {day.events.map((event) => (
+                <div className={eventRow} key={event.key}>
+                  <span className={bullet}>•</span>
+                  <span className={eventText}>
+                    {event.time ? <span className={eventTime}>{event.time}</span> : null}
+                    {event.title}
+                  </span>
+                </div>
+              ))}
+            </section>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
 
+function buildRenderState(output, error) {
+  if (error) {
+    return errorState("Kalendář se nepodařilo načíst.");
+  }
+
+  const icsText = typeof output === "string" ? output.trim() : "";
+
+  if (!icsText) {
+    return { status: "loading", days: [], message: "Načítání kalendáře..." };
+  }
+
+  if (icsText.startsWith(ERROR_PREFIX)) {
+    return errorState(icsText.slice(ERROR_PREFIX.length).trim());
+  }
+
+  try {
+    const now = new Date();
+    const windowStart = startOfDay(now);
+    const windowEnd = addDays(windowStart, 7);
+    const events = parseIcsEvents(icsText, windowStart, windowEnd);
+
+    return {
+      status: "ready",
+      days: groupEventsByDay(events, windowStart, windowEnd),
+      message: null,
+    };
+  } catch (parseError) {
+    return errorState("Kalendář se nepodařilo zpracovat.");
+  }
+}
+
+function errorState(message) {
   return {
-    status: "ready",
-    days: groupEventsByDay(events, windowStart, windowEnd),
-    generatedAt: new Date().toISOString(),
-    message: null,
+    status: "error",
+    days: [],
+    message,
   };
-}
-
-async function loadConfig() {
-  let response;
-
-  try {
-    response = await fetch(CONFIG_PATH, { cache: "no-store" });
-  } catch (error) {
-    throw safeError("Chybí config.local.json vedle widgetu.");
-  }
-
-  if (!response.ok) {
-    throw safeError("Chybí config.local.json vedle widgetu.");
-  }
-
-  let config;
-  try {
-    config = await response.json();
-  } catch (error) {
-    throw safeError("config.local.json není platný JSON.");
-  }
-
-  if (!config || typeof config.calendarIcsUrl !== "string" || !config.calendarIcsUrl.trim()) {
-    throw safeError("V config.local.json chybí calendarIcsUrl.");
-  }
-
-  return { calendarIcsUrl: config.calendarIcsUrl.trim() };
-}
-
-async function loadIcs(calendarIcsUrl) {
-  const urls = [calendarIcsUrl, `${PROXY_URL}${calendarIcsUrl}`];
-
-  for (let index = 0; index < urls.length; index += 1) {
-    try {
-      const response = await fetch(urls[index], { cache: "no-store" });
-      if (response.ok) {
-        return response.text();
-      }
-    } catch (error) {
-      // Try the proxy fallback without exposing the private URL.
-    }
-  }
-
-  throw safeError("Kalendář se nepodařilo načíst.");
 }
 
 function parseIcsEvents(icsText, windowStart, windowEnd) {
@@ -612,12 +561,6 @@ function groupEventsByDay(events, windowStart, windowEnd) {
 
 function eventOverlapsWindow(start, end, windowStart, windowEnd) {
   return end > windowStart && start < windowEnd;
-}
-
-function safeError(message) {
-  const error = new Error("Calendar load failed");
-  error.safeMessage = message;
-  return error;
 }
 
 function unescapeIcsText(value) {

@@ -7,7 +7,7 @@ const ERROR_PREFIX = "__WEEK_GLANCE_ERROR__:";
 
 export const refreshFrequency = REFRESH_MS;
 
-export const command = `/bin/zsh -lc 'url=$(/usr/bin/plutil -extract calendarIcsUrl raw -o - config.local.json 2>/dev/null); if [[ -z "$url" || "$url" == "PASTE_YOUR_SECRET_ICAL_URL_HERE" ]]; then echo "${ERROR_PREFIX}V config.local.json chybí calendarIcsUrl."; exit 0; fi; /usr/bin/curl -fsSL "$url" || echo "${ERROR_PREFIX}Kalendář se nepodařilo načíst."'`;
+export const command = `/bin/zsh -lc 'config_file="$HOME/Library/Application Support/Übersicht/widgets/week-glance-widget/config.local.json"; url=$(/usr/bin/plutil -extract calendarIcsUrl raw -o - "$config_file" 2>/dev/null); if [[ -z "$url" || "$url" == "PASTE_YOUR_SECRET_ICAL_URL_HERE" ]]; then echo "${ERROR_PREFIX}V config.local.json chybí calendarIcsUrl."; exit 0; fi; /usr/bin/curl -fsSL "$url" || echo "${ERROR_PREFIX}Kalendář se nepodařilo načíst."'`;
 
 export const className = `
   top: 26px;

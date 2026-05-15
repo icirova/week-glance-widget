@@ -511,7 +511,7 @@ function toInstance(event, start, end) {
     start,
     end,
     allDay: event.allDay,
-    time: event.allDay ? "" : formatTime(start),
+    time: event.allDay ? "" : formatTimeRange(start, end),
   };
 }
 
@@ -616,6 +616,22 @@ function formatDayLabel(date) {
 
 function formatTime(date) {
   return `${date.getHours()}:${pad(date.getMinutes())}`;
+}
+
+function formatTimeRange(start, end) {
+  if (!end || end <= start || !isSameDay(start, end)) {
+    return formatTime(start);
+  }
+
+  return `${formatTime(start)} - ${formatTime(end)}`;
+}
+
+function isSameDay(left, right) {
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
 }
 
 function formatDateKey(date) {

@@ -12,14 +12,14 @@ export const command = `/bin/zsh -lc 'config_file="$HOME/Library/Application Sup
 export const className = `
   top: 26px;
   right: 28px;
-  width: 304px;
+  width: 280px;
   z-index: 10;
   pointer-events: none;
 `;
 
 const widget = css`
   box-sizing: border-box;
-  width: 304px;
+  width: 280px;
   padding: 16px 16px 14px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 8px;

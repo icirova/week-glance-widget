@@ -84,7 +84,7 @@ Check that Übersicht is running and that the widget is enabled in the app menu.
 ## Behavior
 
 - refreshes every 15 minutes;
-- shows only days that have events;
+- shows the next 7 days, including Czech name days;
 - shows all-day events without a time;
 - shows timed events as a range, for example `12:00 - 14:00`;
 - subtly highlights today;

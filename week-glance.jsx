@@ -4,6 +4,20 @@ const REFRESH_MS = 15 * 60 * 1000;
 const WEEKDAYS_SHORT = ["Ne", "Po", "Út", "St", "Čt", "Pá", "So"];
 const ICAL_WEEKDAYS = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
 const ERROR_PREFIX = "__WEEK_GLANCE_ERROR__:";
+const CZECH_NAME_DAY_MONTHS = [
+  ["", "Karina", "Radmila", "Diana", "Dalimil", "", "Vilma", "Čestmír", "Vladan", "Břetislav", "Bohdana", "Pravoslav", "Edita", "Radovan", "Alice", "Ctirad", "Drahoslav", "Vladislav", "Doubravka", "Ilona", "Běla", "Slavomír", "Zdeněk", "Milena", "Miloš", "Zora", "Ingrid", "Otýlie", "Zdislava", "Robin", "Marika"],
+  ["Hynek, Jasmína", "Nela", "Blažej", "Jarmila", "Dobromila", "Vanda, Arjuna", "Veronika", "Milada", "Apolena", "Mojmír", "Božena", "Slavěna", "Věnceslav", "Valentýn", "Jiřina", "Ljuba", "Miloslava", "Gizela", "Patrik", "Oldřich", "Lenka", "Petr", "Svatopluk", "Matěj", "Liliana", "Dorota", "Alexandr", "Lumír", "Horymír"],
+  ["Bedřich", "Anežka", "Kamil", "Stela", "Kazimír", "Miroslav", "Tomáš", "Gabriela", "Františka", "Viktorie", "Anděla", "Řehoř", "Růžena", "Rút, Matylda", "Ida", "Elena, Herbert", "Vlastimil", "Eduard", "Josef", "Světlana", "Radek", "Leona", "Ivona", "Gabriel", "Marián", "Emanuel", "Dita", "Soňa", "Taťána", "Arnošt", "Kvido"],
+  ["Hugo", "Erika", "Richard", "Ivana", "Miroslava", "Vendula", "Heřman", "Ema", "Dušan", "Darja", "Izabela", "Julius", "Aleš", "Vincenc", "Anastázie", "Irena", "Rudolf", "Valérie", "Rostislav", "Marcela", "Alexandra", "Evženie", "Vojtěch", "Jiří", "Marek", "Oto", "Jaroslav", "Vlastislav", "Robert", "Blahoslav"],
+  ["", "Zikmund", "Alexej", "Květoslav", "Klaudie", "Radoslav", "Stanislav", "", "Ctibor", "Blažena", "Svatava", "Pankrác", "Servác", "Bonifác", "Žofie", "Přemysl", "Aneta", "Nataša", "Ivo a Engelbert", "Zbyšek", "Monika", "Emil", "Vladimír", "Jana", "Viola", "Filip", "Valdemar", "Vilém", "Maxmilián", "Ferdinand", "Kamila"],
+  ["Laura", "Jarmil", "Tamara", "Dalibor", "Dobroslav", "Norbert", "Iveta", "Medard", "Stanislava", "Gita", "Bruno", "Antonie", "Antonín", "Roland", "Vít", "Zbyněk", "Adolf", "Milan", "Leoš", "Květa, Květuše", "Alois", "Pavla", "Zdeňka", "Jan", "Ivan", "Adriana", "Ladislav", "Lubomír", "Petr a Pavel", "Šárka"],
+  ["Jaroslava", "Patricie", "Radomír", "Prokop", "Cyril a Metoděj", "", "Bohuslava", "Nora", "Drahoslava", "Libuše, Amálie", "Olga", "Bořek", "Markéta", "Karolína", "Jindřich", "Luboš", "Martina", "Drahomíra", "Čeněk", "Ilja", "Vítězslav", "Magdaléna", "Libor", "Kristýna", "Jakub", "Anna", "Věroslav", "Viktor", "Marta", "Bořivoj", "Ignác"],
+  ["Oskar", "Gustav", "Miluše", "Dominik", "Kristián", "Oldřiška", "Lada", "Soběslav", "Roman", "Vavřinec", "Zuzana", "Klára", "Alena", "Alan", "Hana", "Jáchym", "Petra", "Helena", "Ludvík", "Bernard", "Johana", "Bohuslav", "Sandra", "Bartoloměj", "Radim", "Luděk", "Otakar", "Augustýn", "Evelína", "Vladěna", "Pavlína"],
+  ["Linda, Samuel", "Adéla", "Bronislav, Bronislava", "Jindřiška", "Boris", "Boleslav", "Regina, Regína", "Mariana", "Daniela", "Irma", "Denisa", "Marie", "Lubor", "Radka", "Jolana", "Ludmila", "Naděžda", "Kryštof", "Zita", "Oleg", "Matouš", "Darina", "Berta", "Jaromír", "Zlata", "Andrea", "Jonáš", "Václav", "Michal", "Jeroným"],
+  ["Igor", "Olívie, Oliver", "Bohumil", "František", "Eliška", "Hanuš", "Justýna", "Věra", "Štefan, Sára", "Marina", "Andrej", "Marcel", "Renáta", "Agáta", "Tereza", "Havel", "Hedvika", "Lukáš", "Michala", "Vendelín", "Brigita", "Sabina", "Teodor", "Nina", "Beáta", "Erik", "Šarlota, Zoe", "", "Silvie", "Tadeáš", "Štěpánka"],
+  ["Felix, Kani", "", "Hubert", "Karel", "Miriam", "Liběna", "Saskie", "Bohumír", "Bohdan", "Evžen", "Martin", "Benedikt", "Tibor", "Sáva", "Leopold", "Otmar", "Mahulena", "Romana", "Alžběta", "Nikola", "Albert", "Cecílie", "Klement", "Emílie", "Kateřina", "Artur", "Xenie", "René", "Zina", "Ondřej"],
+  ["Iva", "Blanka", "Svatoslav", "Barbora", "Jitka", "Mikuláš", "Ambrož", "Květoslava", "Vratislav", "Julie", "Dana", "Simona", "Lucie", "Lýdie", "Radana", "Albína", "Daniel", "Miloslav", "Ester", "Dagmar", "Natálie", "Šimon", "Vlasta", "Adam a Eva", "", "Štěpán", "Žaneta", "Bohumila", "Judita", "David", "Silvestr"],
+];
 
 export const refreshFrequency = REFRESH_MS;
 
@@ -114,13 +128,16 @@ export const render = ({ output, error }) => {
       ) : status === "loading" ? (
         <p className={quiet}>Načítání kalendáře...</p>
       ) : days.length === 0 ? (
-        <p className={quiet}>Žádné události na příštích 7 dní.</p>
+        <p className={quiet}>Žádné události ani jmeniny na příštích 7 dní.</p>
       ) : (
         <div>
           {days.map((day) => (
             <section className={dayBlock} key={day.key}>
               <h2 className={dayHeading}>
-                <span>{day.label}</span>
+                <span>
+                  {day.label}
+                  {day.nameDay ? ` (${day.nameDay})` : ""}
+                </span>
                 {day.isToday ? <span className={todayPill}>dnes</span> : null}
               </h2>
               {day.events.map((event) => (
@@ -518,21 +535,23 @@ function toInstance(event, start, end) {
 function groupEventsByDay(events, windowStart, windowEnd) {
   const grouped = new Map();
   const todayKey = formatDateKey(windowStart);
+  let day = new Date(windowStart);
+
+  while (day < windowEnd) {
+    const dayKey = formatDateKey(day);
+    grouped.set(dayKey, buildDay(day, todayKey));
+    day = addDays(day, 1);
+  }
 
   events.forEach((event) => {
     const firstDay = event.allDay ? startOfDay(event.start) : startOfDay(event.start);
     const lastDay = event.allDay ? addDays(startOfDay(event.end), -1) : startOfDay(event.start);
-    let day = maxDate(firstDay, windowStart);
+    let eventDay = maxDate(firstDay, windowStart);
 
-    while (day <= lastDay && day < windowEnd) {
-      const dayKey = formatDateKey(day);
+    while (eventDay <= lastDay && eventDay < windowEnd) {
+      const dayKey = formatDateKey(eventDay);
       if (!grouped.has(dayKey)) {
-        grouped.set(dayKey, {
-          key: dayKey,
-          label: formatDayLabel(day),
-          isToday: dayKey === todayKey,
-          events: [],
-        });
+        grouped.set(dayKey, buildDay(eventDay, todayKey));
       }
 
       grouped.get(dayKey).events.push({
@@ -542,7 +561,7 @@ function groupEventsByDay(events, windowStart, windowEnd) {
         sortValue: event.allDay ? -1 : event.start.getTime(),
       });
 
-      day = addDays(day, 1);
+      eventDay = addDays(eventDay, 1);
     }
   });
 
@@ -557,6 +576,18 @@ function groupEventsByDay(events, windowStart, windowEnd) {
       return left.title.localeCompare(right.title);
     }),
   }));
+}
+
+function buildDay(date, todayKey) {
+  const key = formatDateKey(date);
+
+  return {
+    key,
+    label: formatDayLabel(date),
+    isToday: key === todayKey,
+    nameDay: getNameDay(date),
+    events: [],
+  };
 }
 
 function eventOverlapsWindow(start, end, windowStart, windowEnd) {
@@ -612,6 +643,11 @@ function maxDate(left, right) {
 
 function formatDayLabel(date) {
   return `${WEEKDAYS_SHORT[date.getDay()]} ${date.getDate()}. ${date.getMonth() + 1}.`;
+}
+
+function getNameDay(date) {
+  const month = CZECH_NAME_DAY_MONTHS[date.getMonth()];
+  return month ? month[date.getDate() - 1] || "" : "";
 }
 
 function formatTime(date) {
